@@ -1,23 +1,19 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
+import { useNavigate } from 'react-router-dom';
 import { Check, Truck, Printer, Package, MapPin, Loader2 } from 'lucide-react';
 import Header from '../../components/landing/Header';
 import Footer from '../../components/landing/Footer';
-import SignUpModal from '../../components/landing/SignUpModal';
-import LoginModal from '../../components/landing/LoginModal';
-import { AnimatePresence } from 'framer-motion';
 import { useSupabase } from '@/providers/SupabaseProvider';
 import { Database } from '../../types/database.types';
 import { useAuth } from '../../contexts/AuthProvider';
 import { useToast } from '../../contexts/ToastProvider';
-import { OnboardingIntent } from '@/types/onboarding';
 
 type Addon = Database['public']['Tables']['addons']['Row'];
 
 const RevoSendPage: React.FC = () => {
   const supabase = useSupabase();
-  const [isSignUpModalOpen, setIsSignUpModalOpen] = useState(false);
-  const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
+  const navigate = useNavigate();
   const [addons, setAddons] = useState<Addon[]>([]);
   const [loading, setLoading] = useState(true);
   const [checkoutLoading, setCheckoutLoading] = useState<string | null>(null);
@@ -44,25 +40,10 @@ const RevoSendPage: React.FC = () => {
     fetchAddons();
   }, [addToast, supabase]);
 
-  const openLoginModal = () => {
-    setIsSignUpModalOpen(false);
-    setIsLoginModalOpen(true);
-  };
-
-  const openSignUpModal = (intent: OnboardingIntent | null = null) => {
-    setIsLoginModalOpen(false);
-    setIsSignUpModalOpen(true);
-  };
-
-  const closeModals = () => {
-    setIsLoginModalOpen(false);
-    setIsSignUpModalOpen(false);
-  };
-
   const handleCheckout = async (addon: Addon) => {
     if (!session) {
       addToast("Você precisa estar logado para ativar um módulo.", "info");
-      openLoginModal();
+      navigate('/auth/login');
       return;
     }
     if (!activeEmpresa) {
@@ -114,7 +95,7 @@ const RevoSendPage: React.FC = () => {
 
   return (
     <div className="bg-gray-50">
-      <Header onLoginClick={openLoginModal} />
+      <Header onLoginClick={() => navigate('/auth/login')} />
 
       {/* Hero Section */}
       <section className="pt-32 pb-24 text-center bg-white">
@@ -142,7 +123,7 @@ const RevoSendPage: React.FC = () => {
             className="mt-10"
           >
             <button
-              onClick={() => monthlyPlan ? handleCheckout(monthlyPlan) : openSignUpModal()}
+              onClick={() => monthlyPlan ? handleCheckout(monthlyPlan) : navigate('/auth/signup')}
               disabled={loading || !!checkoutLoading}
               className="px-8 py-3 bg-blue-600 text-white font-semibold rounded-lg shadow-md hover:bg-blue-700 transition-transform transform hover:scale-105 disabled:opacity-50"
             >
@@ -223,17 +204,6 @@ const RevoSendPage: React.FC = () => {
       </section>
 
       <Footer />
-      
-      <AnimatePresence>
-        {isSignUpModalOpen && (
-          <SignUpModal onClose={closeModals} onLoginClick={openLoginModal} intent={null}/>
-        )}
-      </AnimatePresence>
-      <AnimatePresence>
-        {isLoginModalOpen && (
-          <LoginModal onClose={closeModals} onSignUpClick={openSignUpModal} />
-        )}
-      </AnimatePresence>
     </div>
   );
 };

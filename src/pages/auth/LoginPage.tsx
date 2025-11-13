@@ -1,81 +1,116 @@
-import { useState } from 'react';
+import React, { useState } from 'react';
+import { motion } from 'framer-motion';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { useSupabase } from '@/providers/SupabaseProvider';
+import { Loader2 } from 'lucide-react';
+import { useAuth } from '@/contexts/AuthProvider';
+import { useToast } from '@/contexts/ToastProvider';
 
-const LoginPage = () => {
-  const supabase = useSupabase();
+const LoginPage: React.FC = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
   const location = useLocation();
+  const { addToast } = useToast();
+  const { signInWithPassword } = useAuth();
 
   const from = (location.state as any)?.from?.pathname || '/app';
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError(null);
     setLoading(true);
 
     try {
-      console.log('[AUTH] signInWithPassword', { email });
-      const { error } = await supabase.auth.signInWithPassword({ email, password });
-      if (error) {
-        setError(error.message);
-        return;
-      }
+      await signInWithPassword({ email, password });
+      addToast('Login realizado com sucesso!', 'success');
       navigate(from, { replace: true });
     } catch (err: any) {
-      setError(err?.message ?? 'Falha ao autenticar.');
-    } finally {
+      addToast(err.message || 'Falha no login. Verifique suas credenciais.', 'error');
       setLoading(false);
     }
   };
+  
+  const socialLoginNotImplemented = () => {
+    addToast('Login social em breve!', 'info');
+  }
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4">
-      <form onSubmit={handleLogin} className="w-full max-w-sm bg-white/70 backdrop-blur-xl border border-white/40 rounded-3xl shadow-lg p-6">
-        <h1 className="text-xl font-bold text-center mb-6">Bem-vindo de volta!</h1>
-
-        {error && <div className="mb-3 text-sm text-red-600">{error}</div>}
-
-        <label className="block mb-2 text-sm">Email</label>
-        <input
-          type="email"
-          className="w-full mb-4 rounded-lg border px-3 py-2"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          placeholder="seu@email.com"
-          required
-        />
-
-        <label className="block mb-2 text-sm">Senha</label>
-        <input
-          type="password"
-          className="w-full mb-6 rounded-lg border px-3 py-2"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          placeholder="••••••••"
-          required
-        />
-
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+    >
+      <h2 className="text-2xl font-bold text-center text-gray-800 mb-2">Bem-vindo de volta!</h2>
+      <p className="text-center text-gray-600 mb-6">Faça login para acessar o REVO ERP.</p>
+      
+      <form onSubmit={handleLogin} className="space-y-4">
+        <div>
+          <label className="text-sm font-medium text-gray-700" htmlFor="email-login">Email</label>
+          <input
+            id="email-login"
+            type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            required
+            className="w-full mt-1 p-3 bg-white/50 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition"
+            placeholder="seu@email.com"
+          />
+        </div>
+        <div>
+          <div className="flex justify-between items-center">
+            <label className="text-sm font-medium text-gray-700" htmlFor="password-login">Senha</label>
+            <Link to="/auth/forgot-password" tabIndex={-1} className="text-xs text-blue-600 hover:underline">
+              Esqueci minha senha
+            </Link>
+          </div>
+          <input
+            id="password-login"
+            type="password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            required
+            className="w-full mt-1 p-3 bg-white/50 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition"
+            placeholder="••••••••"
+          />
+        </div>
         <button
           type="submit"
-          className="w-full rounded-lg px-4 py-2 font-semibold bg-blue-600 text-white disabled:opacity-60"
           disabled={loading}
+          className="w-full bg-blue-600 text-white font-bold py-3 px-4 rounded-lg hover:bg-blue-700 transition-colors disabled:bg-blue-400 disabled:cursor-not-allowed flex items-center justify-center"
         >
-          {loading ? 'Entrando...' : 'Entrar'}
+          {loading ? <Loader2 className="animate-spin" /> : 'Entrar'}
         </button>
-
-        <p className="text-center text-sm mt-6">
-          Não tem uma conta?{' '}
-          <Link to="/auth/signup" className="font-medium text-blue-600 hover:underline">
-            Crie sua conta
-          </Link>
-        </p>
       </form>
-    </div>
+      
+      <div className="relative my-6">
+        <div className="absolute inset-0 flex items-center">
+          <div className="w-full border-t border-gray-300" />
+        </div>
+        <div className="relative flex justify-center text-sm">
+          <span className="bg-white/50 px-2 text-gray-500 backdrop-blur-sm">ou continue com</span>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-2 gap-4">
+        <button onClick={socialLoginNotImplemented} disabled className="flex items-center justify-center gap-2 w-full border border-gray-300 py-2.5 px-4 rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+          {/* Google Icon SVG */}
+          <svg className="w-5 h-5" viewBox="0 0 24 24"><path fill="currentColor" d="M21.35,11.1H12.18V13.83H18.69C18.36,17.64 15.19,19.27 12.19,19.27C8.36,19.27 5,16.25 5,12C5,7.75 8.36,4.73 12.19,4.73C15.28,4.73 17.09,6.8 17.09,6.8L19.09,4.8C19.09,4.8 16.7,2.73 12.2,2.73C6.8,2.73 3,6.79 3,12C3,17.21 6.8,21.27 12.2,21.27C17.6,21.27 21.5,17.5 21.5,12.54C21.5,11.83 21.45,11.46 21.35,11.1Z"></path></svg>
+          Google
+        </button>
+        <button onClick={socialLoginNotImplemented} disabled className="flex items-center justify-center gap-2 w-full border border-gray-300 py-2.5 px-4 rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+          {/* GitHub Icon SVG */}
+          <svg className="w-5 h-5" viewBox="0 0 24 24"><path fill="currentColor" d="M12,2A10,10 0 0,0 2,12C2,16.42 4.87,20.17 8.84,21.5C9.34,21.58 9.5,21.27 9.5,21C9.5,20.77 9.5,20.14 9.5,19.31C6.73,19.91 6.14,17.97 6.14,17.97C5.68,16.81 5.03,16.5 5.03,16.5C4.12,15.88 5.1,15.9 5.1,15.9C6.1,15.97 6.63,16.93 6.63,16.93C7.5,18.45 8.97,18 9.54,17.76C9.63,17.11 9.89,16.67 10.17,16.42C7.95,16.17 5.62,15.31 5.62,11.5C5.62,10.39 6,9.5 6.65,8.79C6.55,8.54 6.2,7.5 6.75,6.15C6.75,6.15 7.59,5.88 9.5,7.17C10.29,6.95 11.15,6.84 12,6.84C12.85,6.84 13.71,6.95 14.5,7.17C16.41,5.88 17.25,6.15 17.25,6.15C17.8,7.5 17.45,8.54 17.35,8.79C18,9.5 18.38,10.39 18.38,11.5C18.38,15.32 16.04,16.16 13.83,16.41C14.17,16.72 14.5,17.33 14.5,18.26C14.5,19.6 14.5,20.68 14.5,21C14.5,21.27 14.66,21.59 15.17,21.5C19.14,20.16 22,16.42 22,12A10,10 0 0,0 12,2Z"></path></svg>
+          GitHub
+        </button>
+      </div>
+
+      <p className="text-center text-sm text-gray-600 mt-6">
+        Não tem uma conta?{' '}
+        <Link to="/auth/signup" className="font-medium text-blue-600 hover:underline focus:outline-none">
+          Crie sua conta
+        </Link>
+      </p>
+    </motion.div>
   );
 };
 

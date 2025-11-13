@@ -2,11 +2,7 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import { CheckCircle } from 'lucide-react';
 
-interface HeroProps {
-  onSignUpClick: () => void;
-}
-
-const Hero: React.FC<HeroProps> = ({ onSignUpClick }) => {
+const Hero: React.FC = () => {
   const scrollToPricing = () => {
     document.getElementById('pricing')?.scrollIntoView({ behavior: 'smooth' });
   };
@@ -36,12 +32,12 @@ const Hero: React.FC<HeroProps> = ({ onSignUpClick }) => {
           transition={{ duration: 0.6, delay: 0.4 }}
           className="mt-10 flex justify-center gap-4 flex-wrap"
         >
-          <button
-            onClick={onSignUpClick}
+          <a
+            href="#pricing"
             className="px-8 py-3 bg-blue-600 text-white font-semibold rounded-lg shadow-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-transform transform hover:scale-105"
           >
             Teste grátis por 30 dias
-          </button>
+          </a>
           <button
             onClick={scrollToPricing}
             className="px-8 py-3 bg-white text-blue-600 font-semibold rounded-lg shadow-md hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-200 transition-transform transform hover:scale-105"

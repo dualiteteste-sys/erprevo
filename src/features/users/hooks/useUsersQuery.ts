@@ -24,6 +24,10 @@ export const useUsers = (filters: UsersFilters, page: number, pageSize: number) 
     isLoading: usersQuery.isLoading || countQuery.isLoading,
     isError: usersQuery.isError || countQuery.isError,
     error: usersQuery.error || countQuery.error,
+    refetch: () => {
+      usersQuery.refetch();
+      countQuery.refetch();
+    }
   };
 };
 
@@ -64,4 +68,9 @@ export const useDeleteInvite = () => useUserMutation(
 export const useUpdateUserRole = () => useUserMutation(
   (vars: { userId: string; role: EmpresaUser['role'] }) => usersService.updateUserRole(vars.userId, vars.role),
   'Papel do usuário atualizado com sucesso.'
+);
+
+export const useResendInvite = () => useUserMutation(
+    (email: string) => usersService.resendInviteClient({ email }),
+    'Convite reenviado com sucesso.'
 );

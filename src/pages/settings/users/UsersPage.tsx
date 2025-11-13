@@ -1,57 +1,32 @@
 import React, { useState, useEffect } from 'react';
-import { UsersFilters as Filters, EmpresaUser, UserRole } from '@/features/users/types';
-import { useUsersQuery } from '@/features/users/hooks/useUsersQuery';
-import { UsersTable } from '@/features/users/UsersTable';
+import { UsersFilters as Filters, EmpresaUser, UserRole, UserStatus } from '@/features/users/types';
+import { useUsers } from '@/features/users/hooks/useUsersQuery';
+import { UsersTable } from '@/features/users/components/UsersTable';
 import { EditUserRoleDrawer } from '@/features/users/EditUserRoleDrawer';
-import Input from '@/components/ui/forms/Input';
-import MultiSelect from '@/components/ui/MultiSelect';
 import { Loader2, Users, UserPlus } from 'lucide-react';
 import { useCan } from '@/hooks/useCan';
-import ConfirmationModal from '@/components/ui/ConfirmationModal';
-import { useToast } from '@/contexts/ToastProvider';
-import { deletePendingInvitation } from '@/services/users';
 import { InviteUserDialog } from '@/features/users/InviteUserDialog';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
+import UsersFilters from '@/features/users/components/UsersFilters';
+import Pagination from '@/components/ui/Pagination';
+import { UsersTableSkeleton } from '@/features/users/components/UsersTableSkeleton';
 
-const roleOptions: { value: UserRole, label: string }[] = [
-  { value: 'OWNER', label: 'Proprietário' },
-  { value: 'ADMIN', label: 'Admin' },
-  { value: 'FINANCE', label: 'Financeiro' },
-  { value: 'OPS', label: 'Operações' },
-  { value: 'READONLY', label: 'Somente Leitura' },
-];
-
-const statusOptions = [
-  { value: 'ACTIVE', label: 'Ativo' },
-  { value: 'PENDING', label: 'Pendente' },
-  { value: 'INACTIVE', label: 'Inativo' },
-];
+const PAGE_SIZE = 10;
 
 export default function UsersPage() {
-  const { data, isLoading, isError, errorMsg, fetchFirstPage, filters, setFilters } = useUsersQuery();
-  const [rows, setRows] = useState<EmpresaUser[]>([]);
+  const [filters, setFilters] = useState<Filters>({ q: '', role: [], status: [] });
+  const [page, setPage] = useState(1);
+  const { users, count, isLoading, isError, error, refetch } = useUsers(filters, page, PAGE_SIZE);
+
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<EmpresaUser | null>(null);
-  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
-  const [userToDelete, setUserToDelete] = useState<EmpresaUser | null>(null);
-  const [isDeleting, setIsDeleting] = useState(false);
   const [isInviteOpen, setIsInviteOpen] = useState(false);
 
   const canManage = useCan('usuarios', 'manage');
-  const { addToast } = useToast();
-
-  useEffect(() => {
-    fetchFirstPage();
-  }, [fetchFirstPage, filters]);
-
-  useEffect(() => {
-    if (data) {
-      setRows(data);
-    }
-  }, [data]);
 
   const handleFilterChange = (patch: Partial<Filters>) => {
+    setPage(1); // Reset page on filter change
     setFilters(prev => ({ ...prev, ...patch }));
   };
 
@@ -60,32 +35,8 @@ export default function UsersPage() {
     setIsEditOpen(true);
   };
 
-  const handleUserUpdate = () => {
-    fetchFirstPage();
-  };
-
-  const handleOpenDeleteModal = (user: EmpresaUser) => {
-    setUserToDelete(user);
-    setIsDeleteModalOpen(true);
-  };
-
-  const handleConfirmDelete = async () => {
-    if (!userToDelete) return;
-    setIsDeleting(true);
-    try {
-      await deletePendingInvitation(userToDelete.user_id);
-      addToast('Convite excluído com sucesso!', 'success');
-      setRows(prev => prev.filter(r => r.user_id !== userToDelete.user_id));
-      setIsDeleteModalOpen(false);
-    } catch (err: any) {
-      addToast(err.message || 'Erro ao excluir convite.', 'error');
-    } finally {
-      setIsDeleting(false);
-    }
-  };
-
-  const handleOptimisticInsert = (newUser: EmpresaUser) => {
-    setRows(prev => [newUser, ...prev]);
+  const handleDataUpdate = () => {
+    refetch();
   };
 
   return (
@@ -100,69 +51,41 @@ export default function UsersPage() {
         )}
       </div>
 
-      <div className="mb-4 p-4 border bg-gray-50/50 rounded-xl">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <Input
-            label="Buscar por nome ou email"
-            placeholder="Digite para buscar..."
-            value={filters.q || ''}
-            onChange={(e) => handleFilterChange({ q: e.target.value })}
-          />
-          <MultiSelect
-            label="Papel"
-            options={roleOptions}
-            selected={filters.role || []}
-            onChange={(roles) => handleFilterChange({ role: roles as UserRole[] })}
-            placeholder="Todos os papéis"
-          />
-          <MultiSelect
-            label="Status"
-            options={statusOptions}
-            selected={filters.status || []}
-            onChange={(status) => handleFilterChange({ status: status as any[] })}
-            placeholder="Todos os status"
-          />
-        </div>
-      </div>
+      <UsersFilters filters={filters} onFilterChange={handleFilterChange} />
 
-      {isLoading && rows.length === 0 ? (
-        <div className="flex justify-center items-center h-64"><Loader2 className="h-8 w-8 animate-spin text-blue-500" /></div>
+      {isLoading ? (
+        <UsersTableSkeleton />
       ) : isError ? (
-        <div className="text-center text-red-500 p-8">{errorMsg}</div>
-      ) : rows.length === 0 ? (
-        <div className="text-center p-8 text-gray-500">
+        <div className="text-center text-red-500 p-8">{(error as Error)?.message || 'Erro ao carregar usuários.'}</div>
+      ) : users.length === 0 ? (
+        <div className="text-center p-8 text-gray-500 bg-white rounded-lg shadow">
           <Users className="mx-auto h-12 w-12 text-gray-400" />
           <h3 className="mt-2 text-lg font-medium">Nenhum usuário encontrado</h3>
           <p className="mt-1 text-sm">Tente ajustar os filtros ou convide um novo usuário.</p>
         </div>
       ) : (
-        <UsersTable
-          rows={rows}
-          onEditRole={handleEditRole}
-          onDeleteInvite={handleOpenDeleteModal}
-        />
+        <>
+          <UsersTable
+            rows={users}
+            onEditRole={handleEditRole}
+          />
+          <Pagination
+            currentPage={page}
+            totalCount={count}
+            pageSize={PAGE_SIZE}
+            onPageChange={setPage}
+          />
+        </>
       )}
       
-      <EditUserRoleDrawer
-        open={isEditOpen}
-        user={selectedUser}
-        onClose={() => setIsEditOpen(false)}
-        onSaved={handleUserUpdate}
-        onUserDeactivated={handleUserUpdate}
-        onUserReactivated={handleUserUpdate}
-        onOwnershipTransferred={handleUserUpdate}
-      />
-
-      <ConfirmationModal
-        isOpen={isDeleteModalOpen}
-        onClose={() => setIsDeleteModalOpen(false)}
-        onConfirm={handleConfirmDelete}
-        title="Excluir Convite"
-        description="Tem certeza que deseja excluir este convite? Esta ação não pode ser desfeita."
-        confirmText="Confirmar Exclusão"
-        isLoading={isDeleting}
-        variant="danger"
-      />
+      {selectedUser && (
+        <EditUserRoleDrawer
+          open={isEditOpen}
+          user={selectedUser}
+          onClose={() => setIsEditOpen(false)}
+          onUpdate={handleDataUpdate}
+        />
+      )}
       
       <Dialog open={isInviteOpen} onOpenChange={setIsInviteOpen}>
         <DialogContent>
@@ -174,7 +97,7 @@ export default function UsersPage() {
             </DialogHeader>
             <InviteUserDialog 
                 onClose={() => setIsInviteOpen(false)} 
-                onOptimisticInsert={handleOptimisticInsert}
+                onInviteSent={handleDataUpdate}
             />
         </DialogContent>
       </Dialog>

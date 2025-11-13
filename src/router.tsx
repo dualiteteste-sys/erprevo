@@ -4,6 +4,7 @@ import { createBrowserRouter, Navigate } from "react-router-dom";
 import MainLayout from './components/layout/MainLayout';
 import ProtectedRoute from './components/layout/ProtectedRoute';
 import RequirePermission from "./components/auth/RequirePermission";
+import AuthLayout from "./pages/auth/AuthLayout";
 
 // Public Pages
 import LandingPage from './pages/landing/LandingPage';
@@ -11,9 +12,14 @@ import RevoSendPage from './pages/landing/RevoSendPage';
 import RevoFluxoPage from './pages/landing/RevoFluxoPage';
 
 // Auth & Onboarding Pages
+import LoginPage from "./pages/auth/LoginPage";
+import SignUpPage from "./pages/auth/SignUpPage";
+import ForgotPasswordPage from "./pages/auth/ForgotPasswordPage";
 import PendingVerificationPage from './pages/auth/PendingVerificationPage';
 import AuthConfirmed from './pages/auth/Confirmed';
-import UpdatePasswordPage from "./pages/auth/UpdatePassword";
+import UpdatePasswordPage from "./pages/auth/UpdatePasswordPage";
+import CallbackPage from "@/pages/auth/Callback";
+import SetPasswordPage from "@/pages/auth/SetPassword";
 
 // App Pages
 import Dashboard from './pages/Dashboard';
@@ -49,8 +55,19 @@ export const router = createBrowserRouter([
   { path: "/revo-fluxo", element: <RevoFluxoPage /> },
 
   // Auth & Onboarding routes
-  { path: "/auth/pending-verification", element: <PendingVerificationPage /> },
-  { path: "/auth/confirmed", element: <AuthConfirmed /> },
+  {
+    path: "/auth",
+    element: <AuthLayout />,
+    children: [
+      { path: "login", element: <LoginPage /> },
+      { path: "signup", element: <SignUpPage /> },
+      { path: "forgot-password", element: <ForgotPasswordPage /> },
+      { path: "pending-verification", element: <PendingVerificationPage /> },
+      { path: "confirmed", element: <AuthConfirmed /> },
+    ],
+  },
+  { path: "/auth/callback", element: <CallbackPage /> },
+  { path: "/auth/set-password", element: <SetPasswordPage /> },
   { path: "/auth/update-password", element: <UpdatePasswordPage /> },
   { path: "/onboarding/accept", element: <UpdatePasswordPage /> },
   

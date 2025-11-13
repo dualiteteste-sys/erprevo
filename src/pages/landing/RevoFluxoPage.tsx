@@ -1,31 +1,14 @@
-import React, { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import React from 'react';
+import { motion } from 'framer-motion';
+import { useNavigate } from 'react-router-dom';
 import { CheckCircle, Sparkles, BrainCircuit, AreaChart, Check } from 'lucide-react';
 
 import Header from '../../components/landing/Header';
 import Footer from '../../components/landing/Footer';
-import SignUpModal from '../../components/landing/SignUpModal';
-import LoginModal from '../../components/landing/LoginModal';
 import RevoFluxoLogo from '../../components/landing/RevoFluxoLogo';
 
 const RevoFluxoPage: React.FC = () => {
-    const [isSignUpModalOpen, setIsSignUpModalOpen] = useState(false);
-    const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
-
-    const openLoginModal = () => {
-        setIsSignUpModalOpen(false);
-        setIsLoginModalOpen(true);
-    };
-
-    const openSignUpModal = () => {
-        setIsLoginModalOpen(false);
-        setIsSignUpModalOpen(true);
-    };
-
-    const closeModals = () => {
-        setIsLoginModalOpen(false);
-        setIsSignUpModalOpen(false);
-    };
+    const navigate = useNavigate();
 
     const featureItems = [
         {
@@ -47,7 +30,7 @@ const RevoFluxoPage: React.FC = () => {
 
     return (
         <div className="bg-white">
-            <Header onLoginClick={openLoginModal} />
+            <Header onLoginClick={() => navigate('/auth/login')} />
             <main>
                 {/* Hero Section */}
                 <section className="bg-gray-50 pt-32 pb-24 md:pt-40 md:pb-32">
@@ -83,7 +66,7 @@ const RevoFluxoPage: React.FC = () => {
                             className="mt-10 flex justify-center"
                         >
                             <button
-                                onClick={openSignUpModal}
+                                onClick={() => navigate('/auth/signup')}
                                 className="px-8 py-3 bg-blue-600 text-white font-semibold rounded-lg shadow-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-transform transform hover:scale-105"
                             >
                                 Experimente o REVO Fluxo
@@ -160,7 +143,7 @@ const RevoFluxoPage: React.FC = () => {
                                     <li className="flex items-center"><Check className="h-6 w-6 text-green-500 mr-3" />Suporte via chat</li>
                                 </ul>
                                 <button
-                                    onClick={openSignUpModal}
+                                    onClick={() => navigate('/auth/signup')}
                                     className="w-full mt-10 px-8 py-3 bg-blue-600 text-white font-semibold rounded-lg shadow-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-transform transform hover:scale-105"
                                 >
                                     Ativar o REVO Fluxo
@@ -171,17 +154,6 @@ const RevoFluxoPage: React.FC = () => {
                 </section>
             </main>
             <Footer />
-
-            <AnimatePresence>
-                {isSignUpModalOpen && (
-                    <SignUpModal onClose={closeModals} onLoginClick={openLoginModal} />
-                )}
-            </AnimatePresence>
-            <AnimatePresence>
-                {isLoginModalOpen && (
-                    <LoginModal onClose={closeModals} onSignUpClick={openSignUpModal} />
-                )}
-            </AnimatePresence>
         </div>
     );
 };

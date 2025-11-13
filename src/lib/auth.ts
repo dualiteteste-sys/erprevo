@@ -10,7 +10,7 @@ export async function signUpWithEmail(email: string, password: string) {
     email,
     password,
     options: {
-      emailRedirectTo: "https://erprevo.com/auth/confirmed",
+      emailRedirectTo: `${window.location.origin}/auth/confirmed`,
     },
   });
   if (error) {
@@ -28,7 +28,7 @@ export async function signInWithEmail(email: string) {
   const { data, error } = await supabase.auth.signInWithOtp({
     email,
     options: {
-      emailRedirectTo: "https://erprevo.com/auth/confirmed",
+      emailRedirectTo: `${window.location.origin}/auth/confirmed`,
     },
   });
   if (error) {
@@ -36,6 +36,16 @@ export async function signInWithEmail(email: string) {
     throw error;
   }
   return data;
+}
+
+export async function sendPasswordResetEmail(email: string) {
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: `${window.location.origin}/auth/update-password`,
+    });
+    if (error) {
+      console.error('[AUTH] resetPasswordForEmail error', error);
+      throw error;
+    }
 }
 
 export async function signOut() {

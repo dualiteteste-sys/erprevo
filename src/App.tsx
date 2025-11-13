@@ -1,3 +1,4 @@
+// src/App.tsx
 import { Routes, Route, Navigate } from 'react-router-dom';
 import MainLayout from './components/layout/MainLayout';
 import ProtectedRoute from './components/layout/ProtectedRoute';
@@ -27,6 +28,7 @@ import RolesPage from './pages/settings/roles/RolesPage';
 import SalesGoalsPage from './pages/sales/SalesGoalsPage';
 import AcceptInvite from './pages/onboarding/AcceptInvite';
 import UsersPage from './pages/settings/general/UsersPage';
+import UpdatePasswordPage from './pages/auth/UpdatePasswordPage';
 
 const App = () => {
   return (
@@ -34,12 +36,13 @@ const App = () => {
       <Route path="/" element={<LandingPage />} />
       <Route path="/revo-send" element={<RevoSendPage />} />
       <Route path="/revo-fluxo" element={<RevoFluxoPage />} />
-      
+
       <Route path="/auth/pending-verification" element={<PendingVerificationPage />} />
       <Route path="/auth/confirmed" element={<AuthConfirmed />} />
+      <Route path="/auth/update-password" element={<UpdatePasswordPage />} />
       <Route path="/onboarding/accept" element={<AcceptInvite />} />
-      
-      <Route 
+
+      <Route
         path="/app/*"
         element={
           <ProtectedRoute>
@@ -66,7 +69,7 @@ const App = () => {
         <Route path="desenvolvedor/supabase-demo" element={<SupabaseDemoPage />} />
         <Route path="configuracoes/geral/papeis" element={<RolesPage />} />
         <Route path="configuracoes/geral/users" element={<UsersPage />} />
-        
+
         <Route path="billing/success" element={<BillingSuccessPage />} />
         <Route path="billing/cancel" element={<BillingCancelPage />} />
       </Route>

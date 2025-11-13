@@ -1,10 +1,10 @@
 import { useState } from "react";
-import { supabase } from "@/lib/supabaseClient";
 import { Loader2, Trash2 } from "lucide-react";
+import { deletePendingInvitation } from "@/services/users";
 
 type Props = {
   userId: string;
-  status: string;
+  status: string; // "PENDING" para convites
   onRemoved?: (userId: string) => void;
 };
 
@@ -13,30 +13,18 @@ export default function RemoveInviteButton({ userId, status, onRemoved }: Props)
 
   const onClick = async () => {
     if (loading || status !== "PENDING") return;
-
     setLoading(true);
     try {
-      console.log("[RPC][DELETE_INVITE] start", { userId });
-
-      const { data, error } = await supabase.rpc<number>("delete_pending_invitation", {
-        p_user_id: userId,
-      });
-
-      if (error) {
-        console.error("[RPC][DELETE_INVITE] error", error);
-        alert("Não foi possível remover o convite.");
-        return;
+      const removed = await deletePendingInvitation(userId);
+      if (removed > 0) {
+        console.log("[RPC][DELETE_INVITE] removed", { userId, removed });
+        onRemoved?.(userId);
+      } else {
+        console.warn("[RPC][DELETE_INVITE] nada removido (idempotente)", { userId });
       }
-
-      const deletedCount = typeof data === "number" ? data : 0;
-      console.log("[RPC][DELETE_INVITE] result", { deletedCount });
-
-      if (deletedCount < 1) {
-        alert("Convite não pôde ser removido (verifique permissões/status).");
-        return;
-      }
-
-      onRemoved?.(userId);
+    } catch (err: any) {
+      console.error("[RPC][DELETE_INVITE] error", err);
+      alert(err?.message ?? "Falha ao remover convite. Veja o console para detalhes.");
     } finally {
       setLoading(false);
     }
